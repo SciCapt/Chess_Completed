@@ -1,0 +1,141 @@
+from AI import *
+from Printer import *
+from Definitions import *
+from MousePosition import *
+from PieceMovement import *
+from CheckmateNerd import *
+import pygetwindow as wn
+from os import system
+import numpy as np
+import time
+import random as rn
+
+# Setup AI
+AIPlayer = input("Use AI For Player 2? (Y/N): ")
+if AIPlayer == "Y":
+    UseAI = True
+else:
+    UseAI = False
+
+# Set CMD Window to Particular Size and Position
+system("title " + 'Chess')
+time.sleep(.05) # small time delay to allow title to update
+GameWindow = wn.getWindowsWithTitle('Chess')[0]
+GameWindow.resizeTo(930, 830)
+GameWindow.moveTo(0, 0)
+
+# Base Array Variables
+Pieces = Starting_Board(np.zeros((8,8))); Player = "W"
+if rn.random() > 0.5:
+    Pieces = Flip_Pieces(Pieces)
+    Player = "B"
+MainPlayer = Player
+# For Player Turn Ordering
+# if Player == "B":
+#     turntable = ["B", "W"]
+# else:
+turntable = ["W", "B"]
+mistake = False
+restart = False
+turn = 0
+
+# Dynamic Section
+for t in range(1000):
+
+    # Check if player is idiot and selected unmoveable piece, or if the player
+    # is semi-compeitent and completed their're turn, move to the next player
+    if mistake == False:
+        Player = turntable[turn%2]
+        turn = turn + 1
+    else:
+        mistake = False
+
+    # Checkmate Detection
+    if Is_Checkmate(Pieces, Player):
+        break
+
+    # Use AI for Player 2
+    if UseAI and Player != MainPlayer:
+        # Make move via ai
+        Pieces = AI_Bob_Move(Pieces, Player)
+
+        # Set board for other player
+        if turn != 1:
+            Pieces = Flip_Pieces(Pieces)
+        continue
+
+    # Print Board; Highlight king if it is in check
+    if In_Check(Pieces, Player):
+        if Player == "W":
+            king = 6.1
+        elif Player == "B":
+            king = 6.2
+        for j in range(8):
+            for i in range(8):
+                if Pieces[j,i] == king:
+                    kingX = i
+                    kingY = j
+        CMD_Print(Highlight_Square([[kingY, kingX]], Pieces))
+    else:
+        CMD_Print(Pieces_To_Printable(Pieces))
+
+    # Select Piece and check its a piece of the current player
+    while True:
+        PieceCoords = Select_Square()
+        # Check if actually moving one of the player's pieces
+        if Player == 'W':
+            if Piece_Is_White(PieceCoords, Pieces) == True:
+                break
+        elif Player == 'B':
+            if Piece_Is_Black(PieceCoords, Pieces) == True:
+                break
+
+    # Calculate legal moves; Update screen with highlight
+    AllowedMoves = Legal_Moves(PieceCoords, Pieces, Player)
+    if len(AllowedMoves) == 0:
+        mistake = True
+        continue
+    AllowedMoves, Pinned = Is_Pinned(PieceCoords, Pieces, Player)
+    if Pinned:
+        mistake = True
+        continue
+
+    # Limit moves to lgeal moves if in check
+    if In_Check(Pieces, Player):
+        AllowedMoves, Pieces = Check_Move_Narrower(AllowedMoves, Pieces, Player)
+    if len(AllowedMoves) == 0:
+        mistake = True
+        continue
+
+    CMD_Print(Highlight_Square([PieceCoords]+AllowedMoves, Pieces))
+
+    # Select new position or unselect current position; check if legal then move
+    HasntMoved = True
+    while HasntMoved:
+        NewCoords = Select_Square()
+        # if NewCoords == PieceCoords: # Unselect piece and restart!
+        #     restart = True
+        #     break
+        # Check if actually making a legal move
+        HasntMoved = Make_Move(AllowedMoves, NewCoords, PieceCoords, Pieces)
+        if HasntMoved == True: # Actually fixes a few selection problems
+            restart = True     # while also making unselecting easier
+            mistake = True
+            break
+
+    # Secondary break for unselecting a piece
+    if restart == True:
+        restart = False
+        mistake = True
+        continue
+
+    # Set Board for next player
+    Pieces = Flip_Pieces(Pieces)
+
+# Final Out for Detected Checkmate
+print(f'\nCheckmate Detected!')
+if Player == "W":
+    Player = "B"
+elif Player == "B":
+    Player = "W"
+print(f'Player {Player} Wins!')
