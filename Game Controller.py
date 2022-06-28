@@ -36,16 +36,6 @@ mistake = False
 restart = False
 turn = 0
 
-# Testing Castling:
-# Pieces[6,:] = 0
-# Pieces[7,:] = 0
-# Pieces[0,:] = 0
-# Pieces[1,:] = 0
-# Pieces[7,3] = 6.2
-# Pieces[0,3] = 6.1
-# Pieces[0,0] = 4.1
-# Pieces[7,0] = 4.2
-
 # Dynamic Section
 for t in range(1000):
 
