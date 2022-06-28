@@ -9,10 +9,11 @@ from os import system
 import numpy as np
 import time
 import random as rn
+import mouse
 
 # Setup AI
-AIPlayer = input("Use AI For Player 2? (Y/N): ")
-if AIPlayer == "Y":
+AIPlayer = input("Use AI For Player 2? (y/n): ")
+if AIPlayer in ['y', 'Y', 'yes', 'YES', 'nai', 'si', 'da', 'dak', 'wi']:
     UseAI = True
 else:
     UseAI = False
@@ -28,16 +29,22 @@ GameWindow.moveTo(0, 0)
 Pieces = Starting_Board(np.zeros((8,8))); Player = "W"
 if rn.random() > 0.5:
     Pieces = Flip_Pieces(Pieces)
-    Player = "B"
+Player = "B"
 MainPlayer = Player
-# For Player Turn Ordering
-# if Player == "B":
-#     turntable = ["B", "W"]
-# else:
 turntable = ["W", "B"]
 mistake = False
 restart = False
 turn = 0
+
+# Testing Castling:
+# Pieces[6,:] = 0
+# Pieces[7,:] = 0
+# Pieces[0,:] = 0
+# Pieces[1,:] = 0
+# Pieces[7,3] = 6.2
+# Pieces[0,3] = 6.1
+# Pieces[0,0] = 4.1
+# Pieces[7,0] = 4.2
 
 # Dynamic Section
 for t in range(1000):
@@ -51,7 +58,11 @@ for t in range(1000):
         mistake = False
 
     # Checkmate Detection
+    if Player == MainPlayer:
+        CMD_Print(Pieces_To_Printable(Pieces))
     if Is_Checkmate(Pieces, Player):
+        break
+    if Only_Kings(Pieces):
         break
 
     # Use AI for Player 2
@@ -129,13 +140,26 @@ for t in range(1000):
         mistake = True
         continue
 
+    # Pawn Promotion Check
+    pi = Pieces[NewCoords[0], NewCoords[1]]
+    if pi == 1.1 and Player == "W" or pi == 1.2 and Player == "B":
+        if NewCoords[0] == 0:
+            system('cls')
+            newpiece = Pawn_Promotion(Player)
+            Pieces[NewCoords[0], NewCoords[1]] = newpiece
+
     # Set Board for next player
     Pieces = Flip_Pieces(Pieces)
 
-# Final Out for Detected Checkmate
-print(f'\nCheckmate Detected!')
-if Player == "W":
-    Player = "B"
-elif Player == "B":
-    Player = "W"
-print(f'Player {Player} Wins!')
+# Final Out for Detected Checkmate/Stalemate/etc.
+if Only_Kings(Pieces):
+    print(f'\nStalemate Detected!')
+elif not In_Check(Pieces, Player):
+    print(f'\nStalemate Detected!')
+else:
+    print(f'\nCheckmate Detected!')
+    if Player == "W":
+        Player = "B"
+    elif Player == "B":
+        Player = "W"
+    print(f'Player {Player} Wins!')

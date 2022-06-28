@@ -10,7 +10,7 @@ It is worth noting that when running the game via the bat file (it just simply l
 
 
 CONTROLS AND STUFF:
-Don't move the CMD when it starts up and resizes! To enable the following controls, It must be at a particular part of the screen, with its particular size.
+Don't move the CMD when it starts up and resizes!!!! To enable the following controls, It must be at a particular part of the screen, with its particular size.
 
 - Right-click is your friend. Either select a piece with right click or click again somewhere to unselect (possible moves will be highlighted for you). If you select a piece that has no moves, it will be automatically deselected and the game will be ready for you to select a different piece.
 
@@ -20,4 +20,6 @@ That's about it, no fancy controls here
 Other Misc:
 When a checkmate scenario is detected the screen will no longer print frames of the chess game and instead will give a message saying checkmate was detected and which player won.
 
-It should be obvious which pieces are the white ones and which are the black ones. I did the best I could with the graphics using the command prompt.
+The same goes for a stalemate scenario. Also, if only kings are left on the board, a stalemate scenario is called. Not sure why someone would keep playing in that case.
+
+It should be obvious which pieces are the white ones and which are the black ones. I did the best I could with the graphics!

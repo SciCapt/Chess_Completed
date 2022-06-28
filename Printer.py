@@ -84,3 +84,45 @@ def Highlight_Square(coords_list, Pieces):       # highlighting graphics transla
         except:
             continue
     return conversionArray
+
+def Pawn_Promotion(Player):
+    board = np.zeros((8,8))
+    if Player == 'W':
+        board[3,3] = 5.1
+        board[3,5] = 4.1
+        board[5,3] = 3.1
+        board[5,5] = 2.1
+    if Player == 'B':
+        board[3,3] = 5.2
+        board[3,5] = 4.2
+        board[5,3] = 3.2
+        board[5,5] = 2.2
+
+    print('Pawn Promotion Detected!')
+    time.sleep(1)
+    print('Select the New Piece You Want:')
+    time.sleep(2)
+    CMD_Print(Pieces_To_Printable(board))
+
+    while True:
+        coords = Select_Square()
+        if Player == 'W':
+            if coords == [3,3]:
+                chosen = 5.1
+            elif coords == [3,5]:
+                chosen = 4.1
+            elif coords == [5,3]:
+                chosen = 3.1
+            elif coords == [5,5]:
+                chosen =  2.1
+        if Player == 'B':
+            if coords == [3,3]:
+                chosen = 5.2
+            elif coords == [3,5]:
+                chosen = 4.2
+            elif coords == [5,3]:
+                chosen = 3.2
+            elif coords == [5,5]:
+                chosen = 2.2
+        break
+    return chosen

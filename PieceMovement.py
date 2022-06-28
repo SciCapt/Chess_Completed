@@ -24,10 +24,32 @@ def Make_Move(AllowedMoves, NewCoords, PieceCoords, Pieces):
     for n in range(len(AllowedMoves)):
         OldX = AllowedMoves[n][3]; OldY = AllowedMoves[n][2]
         ChkX = AllowedMoves[n][1]; ChkY = AllowedMoves[n][0]
+        try:
+            IsCastling = AllowedMoves[n][4]
+        except:
+            IsCastling = False
+        if IsCastling:
+            King = Pieces[NewY, NewX]
+            Rook = Pieces[OldY, OldX]
+            kingy = AllowedMoves[n][5]
+            kingx = AllowedMoves[n][6]
+            rooky = AllowedMoves[n][7]
+            rookx = AllowedMoves[n][8]
+            # if HasCastled(King) == True:          # castling idea stuff
+            #     AllowedMoves[n] = [0, 0, 0, 0]
+            #     break
         if OldX == PieceCoords[1] and OldY == PieceCoords[0]:
             if NewX == ChkX and NewY == ChkY:
-                Pieces[NewY, NewX] = Pieces[PieceCoords[0], PieceCoords[1]]
-                Pieces[PieceCoords[0], PieceCoords[1]] = 0
+                if not IsCastling:
+                    Pieces[NewY, NewX] = Pieces[PieceCoords[0], PieceCoords[1]]
+                    Pieces[PieceCoords[0], PieceCoords[1]] = 0
+                else:
+                    Pieces[kingy, kingx] = King
+                    Pieces[rooky, rookx] = Rook
+                    Pieces[OldY, OldX] = 0
+                    Pieces[NewY, NewX] = 0
+                    # Pieces[NewY, NewX] = Pieces[NewY, NewX] + 0.01
+                        # idk do something like this to prevent multiple castling moves
                 CMD_Print(Pieces_To_Printable(Pieces))
                 return False
     return True
@@ -55,6 +77,32 @@ def Flip_Moves(Moves): # translate one player's legal moves to the other player'
             Moves[n][nn] = num
     return Moves
 
+def Only_Kings(Pieces):
+    # Remove kings from board
+    for j in range(8):
+        for i in range(8):
+            if Pieces[j,i] == 6.1:
+                Pieces[j,i] = 0
+                king1 = [j,i]
+            elif Pieces[j,i] == 6.2:
+                Pieces[j,i] = 0
+                king2 = [j,i]
+
+    # Test if no other pieces are on the board
+    same = True
+    for j in range(8):
+        if same == False:
+            break
+        for i in range(8):
+            if Pieces[j,i] != 0:
+                same = False
+                break
+
+    # Restore board
+    Pieces[king1[0], king1[1]] = 6.1
+    Pieces[king2[0], king2[1]] = 6.2
+    return same
+
 def Legal_Moves_FOR_KING(PieceCoords, Pieces, Player):
     piece = Pieces[PieceCoords[0], PieceCoords[1]]
     legal = []
@@ -69,24 +117,31 @@ def Legal_Moves_FOR_KING(PieceCoords, Pieces, Player):
                         # format is [(ynew, xnew), (yold, xold)]
 
         # Typical one move up
-        if Pieces[PieceCoords[0]-1, PieceCoords[1]] == 0:
-            legal.append([PieceCoords[0]-1, PieceCoords[1], PieceCoords[0], PieceCoords[1]])
+        if PieceCoords[0]-1 >= 0 and PieceCoords[0]-1 < 8:
+            if Pieces[PieceCoords[0]-1, PieceCoords[1]] == 0:
+                legal.append([PieceCoords[0]-1, PieceCoords[1], PieceCoords[0], PieceCoords[1]])
 
         # Taking a piece to the diagonal
+        if PieceCoords[0]-1 >= 0 and PieceCoords[0]-1 < 8:
+            if PieceCoords[1]-1 >= 0 and PieceCoords[1]-1 < 8:
+                try:
+                    diag1 = Pieces[PieceCoords[0]-1, PieceCoords[1]-1]
+                except:
+                    diag1 = 0
+            if PieceCoords[1]+1 >= 0 and PieceCoords[1]+1 < 8:
+                try:
+                    diag2 = Pieces[PieceCoords[0]-1, PieceCoords[1]+1]
+                except:
+                    diag2 = 0
         try:
-            diag1 = Pieces[PieceCoords[0]-1, PieceCoords[1]-1]
+            if diag1 != 0:
+                if Player == 'B' and (Piece_Is_White([PieceCoords[0]-1, PieceCoords[1]-1], Pieces)) or Player == 'W' and (Piece_Is_Black([PieceCoords[0]-1, PieceCoords[1]-1], Pieces)):
+                    legal.append([PieceCoords[0]-1, PieceCoords[1]-1, PieceCoords[0], PieceCoords[1]])
+            if diag2 != 0:
+                if Player == 'B' and (Piece_Is_White([PieceCoords[0]-1, PieceCoords[1]+1], Pieces)) or Player == 'W' and (Piece_Is_Black([PieceCoords[0]-1, PieceCoords[1]+1], Pieces)):
+                    legal.append([PieceCoords[0]-1, PieceCoords[1]+1, PieceCoords[0], PieceCoords[1]])
         except:
-            diag1 = 0
-        try:
-            diag2 = Pieces[PieceCoords[0]-1, PieceCoords[1]+1]
-        except:
-            diag2 = 0
-        if diag1 != 0:
-            if Player == 'B' and (Piece_Is_White([PieceCoords[0]-1, PieceCoords[1]-1], Pieces)) or Player == 'W' and (Piece_Is_Black([PieceCoords[0]-1, PieceCoords[1]-1], Pieces)):
-                legal.append([PieceCoords[0]-1, PieceCoords[1]-1, PieceCoords[0], PieceCoords[1]])
-        if diag2 != 0:
-            if Player == 'B' and (Piece_Is_White([PieceCoords[0]-1, PieceCoords[1]+1], Pieces)) or Player == 'W' and (Piece_Is_Black([PieceCoords[0]-1, PieceCoords[1]+1], Pieces)):
-                legal.append([PieceCoords[0]-1, PieceCoords[1]+1, PieceCoords[0], PieceCoords[1]])
+            pass
 
         # # En` Patato - effects too many things (printer, piece values, removing 'en potatabilty' later, etc.)
         # try:
@@ -232,6 +287,37 @@ def Legal_Moves_FOR_KING(PieceCoords, Pieces, Player):
                     legal.append([By+j,Bx+i, By, Bx])
                     break
 
+        # Castling #
+        Ry = By; Rx = Bx
+        # for black
+        if Rx == 0 and Ry == 7:
+            if Pieces[7, 1] == 0 and Pieces[7,2] == 0 and Pieces[7,3] == 6.2 and Player == "B":
+                legal.append([7, 3, 7, 0, True, 7, 1, 7, 2])
+                # format of [newy, newx, oldy, oldx, IsCastling, kingy, kingx, rooky, rookx]
+        if Rx == 7 and Ry == 7:
+            if Pieces[7, 4] == 0 and Pieces[7,5] == 0 and Pieces[7,6] == 0 and Pieces[7,3] == 6.2 and Player == "B":
+                legal.append([7, 3, 7, 7, True, 7, 5, 7, 4])
+        if Rx == 0 and Ry == 0:
+            if Pieces[0, 1] == 0 and Pieces[0,2] == 0 and Pieces[0,3] == 0 and Pieces[0,4] == 6.2 and Player == "B":
+                legal.append([0,4, 0, 0, True, 0, 2, 0, 3])
+        if Rx == 7 and Ry == 0:
+            if Pieces[0, 6] == 0 and Pieces[0,5] == 0 and Pieces[0,4] == 6.2 and Player == "B":
+                legal.append([0,4, 0, 7, True, 0, 6, 0, 5])
+        # for white
+        if Rx == 0 and Ry == 7:
+            if Pieces[7, 1] == 0 and Pieces[7,2] == 0 and Pieces[7,3] == 0 and Pieces[7,4] == 6.1 and Player == "W":
+                legal.append([7, 4, 7, 0, True, 7, 2, 7, 3])
+        if Rx == 7 and Ry == 7:
+            if Pieces[7, 6] == 0 and Pieces[7,5] == 0 and Pieces[7,4] == 6.1 and Player == "W":
+                legal.append([7, 4, 7, 7, True, 7, 6, 7, 5])
+        if Rx == 0 and Ry == 0:
+            if Pieces[0, 1] == 0 and Pieces[0,2] == 0 and Pieces[0,3] == 6.1 and Player == "W":
+                legal.append([0,3, 0, 0, True, 0, 1, 0, 2])
+        if Rx == 7 and Ry == 0:
+            if Pieces[0, 6] == 0 and Pieces[0,5] == 0 and Pieces[0,4] == 0 and Pieces[0,3] == 6.1 and Player == "W":
+                legal.append([0,3, 0, 7, True, 0, 5, 0, 4])
+
+
     # Queen #
     if (piece == 5.1 and Player == 'W') or (piece == 5.2 and Player == 'B'):
         # OK YES I just used the bishop's and "rook's" code =)
@@ -341,24 +427,31 @@ def Legal_Moves(PieceCoords, Pieces, Player):
                         # format is [(ynew, xnew), (yold, xold)]
 
         # Typical one move up
-        if Pieces[PieceCoords[0]-1, PieceCoords[1]] == 0:
-            legal.append([PieceCoords[0]-1, PieceCoords[1], PieceCoords[0], PieceCoords[1]])
+        if PieceCoords[0]-1 >= 0 and PieceCoords[0]-1 < 8:
+            if Pieces[PieceCoords[0]-1, PieceCoords[1]] == 0:
+                legal.append([PieceCoords[0]-1, PieceCoords[1], PieceCoords[0], PieceCoords[1]])
 
         # Taking a piece to the diagonal
+        if PieceCoords[0]-1 >= 0 and PieceCoords[0]-1 < 8:
+            if PieceCoords[1]-1 >= 0 and PieceCoords[1]-1 < 8:
+                try:
+                    diag1 = Pieces[PieceCoords[0]-1, PieceCoords[1]-1]
+                except:
+                    diag1 = 0
+            if PieceCoords[1]+1 >= 0 and PieceCoords[1]+1 < 8:
+                try:
+                    diag2 = Pieces[PieceCoords[0]-1, PieceCoords[1]+1]
+                except:
+                    diag2 = 0
         try:
-            diag1 = Pieces[PieceCoords[0]-1, PieceCoords[1]-1]
+            if diag1 != 0:
+                if Player == 'B' and (Piece_Is_White([PieceCoords[0]-1, PieceCoords[1]-1], Pieces)) or Player == 'W' and (Piece_Is_Black([PieceCoords[0]-1, PieceCoords[1]-1], Pieces)):
+                    legal.append([PieceCoords[0]-1, PieceCoords[1]-1, PieceCoords[0], PieceCoords[1]])
+            if diag2 != 0:
+                if Player == 'B' and (Piece_Is_White([PieceCoords[0]-1, PieceCoords[1]+1], Pieces)) or Player == 'W' and (Piece_Is_Black([PieceCoords[0]-1, PieceCoords[1]+1], Pieces)):
+                    legal.append([PieceCoords[0]-1, PieceCoords[1]+1, PieceCoords[0], PieceCoords[1]])
         except:
-            diag1 = 0
-        try:
-            diag2 = Pieces[PieceCoords[0]-1, PieceCoords[1]+1]
-        except:
-            diag2 = 0
-        if diag1 != 0:
-            if Player == 'B' and (Piece_Is_White([PieceCoords[0]-1, PieceCoords[1]-1], Pieces)) or Player == 'W' and (Piece_Is_Black([PieceCoords[0]-1, PieceCoords[1]-1], Pieces)):
-                legal.append([PieceCoords[0]-1, PieceCoords[1]-1, PieceCoords[0], PieceCoords[1]])
-        if diag2 != 0:
-            if Player == 'B' and (Piece_Is_White([PieceCoords[0]-1, PieceCoords[1]+1], Pieces)) or Player == 'W' and (Piece_Is_Black([PieceCoords[0]-1, PieceCoords[1]+1], Pieces)):
-                legal.append([PieceCoords[0]-1, PieceCoords[1]+1, PieceCoords[0], PieceCoords[1]])
+            pass
 
     # Bishop #
     if (piece == 2.1 and Player == 'W') or (piece == 2.2 and Player == 'B'):
@@ -468,6 +561,36 @@ def Legal_Moves(PieceCoords, Pieces, Player):
                 elif Player=="B" and Piece_Is_White([By+j,Bx+i],Pieces) or Player=="W" and Piece_Is_Black([By+j,Bx+i],Pieces):
                     legal.append([By+j,Bx+i, By, Bx])
                     break
+
+        # Castling #
+        Ry = By; Rx = Bx
+        # for black
+        if Rx == 0 and Ry == 7:
+            if Pieces[7, 1] == 0 and Pieces[7,2] == 0 and Pieces[7,3] == 6.2 and Player == "B":
+                legal.append([7, 3, 7, 0, True, 7, 1, 7, 2])
+                # format of [newy, newx, oldy, oldx, IsCastling, kingy, kingx, rooky, rookx]
+        if Rx == 7 and Ry == 7:
+            if Pieces[7, 4] == 0 and Pieces[7,5] == 0 and Pieces[7,6] == 0 and Pieces[7,3] == 6.2 and Player == "B":
+                legal.append([7, 3, 7, 7, True, 7, 5, 7, 4])
+        if Rx == 0 and Ry == 0:
+            if Pieces[0, 1] == 0 and Pieces[0,2] == 0 and Pieces[0,3] == 0 and Pieces[0,4] == 6.2 and Player == "B":
+                legal.append([0,4, 0, 0, True, 0, 2, 0, 3])
+        if Rx == 7 and Ry == 0:
+            if Pieces[0, 6] == 0 and Pieces[0,5] == 0 and Pieces[0,4] == 6.2 and Player == "B":
+                legal.append([0,4, 0, 7, True, 0, 6, 0, 5])
+        # for white
+        if Rx == 0 and Ry == 7:
+            if Pieces[7, 1] == 0 and Pieces[7,2] == 0 and Pieces[7,3] == 0 and Pieces[7,4] == 6.1 and Player == "W":
+                legal.append([7, 4, 7, 0, True, 7, 2, 7, 3])
+        if Rx == 7 and Ry == 7:
+            if Pieces[7, 6] == 0 and Pieces[7,5] == 0 and Pieces[7,4] == 6.1 and Player == "W":
+                legal.append([7, 4, 7, 7, True, 7, 6, 7, 5])
+        if Rx == 0 and Ry == 0:
+            if Pieces[0, 1] == 0 and Pieces[0,2] == 0 and Pieces[0,3] == 6.1 and Player == "W":
+                legal.append([0,3, 0, 0, True, 0, 1, 0, 2])
+        if Rx == 7 and Ry == 0:
+            if Pieces[0, 6] == 0 and Pieces[0,5] == 0 and Pieces[0,4] == 0 and Pieces[0,3] == 6.1 and Player == "W":
+                legal.append([0,3, 0, 7, True, 0, 5, 0, 4])
 
     # Queen #
     if (piece == 5.1 and Player == 'W') or (piece == 5.2 and Player == 'B'):
