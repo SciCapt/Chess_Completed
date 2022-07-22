@@ -13,8 +13,13 @@ import mouse
 
 # Setup AI
 AIPlayer = input("Use AI For Player 2? (y/n): ")
-if AIPlayer in ['y', 'Y', 'yes', 'YES', 'nai', 'si', 'da', 'dak', 'wi']:
+# AIPlayer = 'y'
+if AIPlayer in ['y', 'Y', 'yes', 'YES', 'nai', 'si', 'da', 'dak', 'wi', 'oui']:
     UseAI = True
+    try:
+        Difficulty = int(input("AI Difficulty (1 - 5): "))
+    except:
+        Difficulty = 1
 else:
     UseAI = False
 
@@ -26,10 +31,11 @@ GameWindow.resizeTo(930, 830)
 GameWindow.moveTo(0, 0)
 
 # Base Array Variables
-Pieces = Starting_Board(np.zeros((8,8))); Player = "W"
-if rn.random() > 0.5:
-    Pieces = Flip_Pieces(Pieces)
-Player = "B"
+Pieces = Starting_Board(np.zeros((8,8,3))); Player = "W"
+    # dim 0 is pieces; dim 1 is piece flags; dim 2 is for ai captures
+# if rn.random() > 0.5:
+#     Pieces = Flip_Pieces(Pieces)
+#     Player = "B"
 MainPlayer = Player
 turntable = ["W", "B"]
 mistake = False
@@ -38,7 +44,6 @@ turn = 0
 
 # Dynamic Section
 for t in range(1000):
-
     # Check if player is idiot and selected unmoveable piece, or if the player
     # is semi-compeitent and completed their're turn, move to the next player
     if mistake == False:
@@ -58,7 +63,16 @@ for t in range(1000):
     # Use AI for Player 2
     if UseAI and Player != MainPlayer:
         # Make move via ai
-        Pieces = AI_Bob_Move(Pieces, Player)
+        if Difficulty == 1:
+            Pieces = AI_Bob_Move(Pieces, Player)
+        elif Difficulty == 2:
+            Pieces = AI_Jeff_Move(Pieces, Player)
+        elif Difficulty == 3:
+            Pieces = AI_Jeff_Advanced_Move(Pieces, Player)
+        elif Difficulty == 4:
+            Pieces = AI_Nelson_Move(Pieces, Player)
+        elif Difficulty == 5:
+            Pieces = AI_Jeff_Advanced_Move(Pieces, Player, SickoMode=True)
 
         # Set board for other player
         if turn != 1:
@@ -73,7 +87,7 @@ for t in range(1000):
             king = 6.2
         for j in range(8):
             for i in range(8):
-                if Pieces[j,i] == king:
+                if Pieces[j,i,0] == king:
                     kingX = i
                     kingY = j
         CMD_Print(Highlight_Square([[kingY, kingX]], Pieces))
@@ -83,7 +97,7 @@ for t in range(1000):
     # Select Piece and check its a piece of the current player
     while True:
         PieceCoords = Select_Square()
-        # Check if actually moving one of the player's pieces
+        # Check if actually moving one of the player's Pieces
         if Player == 'W':
             if Piece_Is_White(PieceCoords, Pieces) == True:
                 break
@@ -131,12 +145,14 @@ for t in range(1000):
         continue
 
     # Pawn Promotion Check
-    pi = Pieces[NewCoords[0], NewCoords[1]]
+    pi = Pieces[NewCoords[0], NewCoords[1],0]
     if pi == 1.1 and Player == "W" or pi == 1.2 and Player == "B":
         if NewCoords[0] == 0:
-            system('cls')
+            # system('cls')
             newpiece = Pawn_Promotion(Player)
-            Pieces[NewCoords[0], NewCoords[1]] = newpiece
+            Pieces[NewCoords[0], NewCoords[1],0] = newpiece
+            Pieces[NewCoords[0], NewCoords[1],1] = 2 # Flag for pawn promotion
+            Pieces[PieceCoords[0], PieceCoords[1],1] = 0 # Remove en potato flag
 
     # Set Board for next player
     Pieces = Flip_Pieces(Pieces)
