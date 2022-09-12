@@ -188,23 +188,37 @@ def Piece(n):
 # Starting Layout
 def Starting_Board(Pieces):
     # Layout of White Pieces
-    Pieces[6,:] = 1.1
-    Pieces[7,2] = 2.1
-    Pieces[7,5] = 2.1
-    Pieces[7,1] = 3.1
-    Pieces[7,6] = 3.1
-    Pieces[7,0] = 4.1
-    Pieces[7,7] = 4.1
-    Pieces[7,3] = 5.1
-    Pieces[7,4] = 6.1
+    Pieces[6,:,0] = 1.1
+    Pieces[7,2,0] = 2.1
+    Pieces[7,5,0] = 2.1
+    Pieces[7,1,0] = 3.1
+    Pieces[7,6,0] = 3.1
+    Pieces[7,0,0] = 4.1
+    Pieces[7,7,0] = 4.1
+    Pieces[7,3,0] = 5.1
+    Pieces[7,4,0] = 6.1
     # Layout of Black Pieces
-    Pieces[1,:] = 1.2
-    Pieces[0,2] = 2.2
-    Pieces[0,5] = 2.2
-    Pieces[0,1] = 3.2
-    Pieces[0,6] = 3.2
-    Pieces[0,0] = 4.2
-    Pieces[0,7] = 4.2
-    Pieces[0,3] = 5.2
-    Pieces[0,4] = 6.2
+    Pieces[1,:,0] = 1.2
+    Pieces[0,2,0] = 2.2
+    Pieces[0,5,0] = 2.2
+    Pieces[0,1,0] = 3.2
+    Pieces[0,6,0] = 3.2
+    Pieces[0,0,0] = 4.2
+    Pieces[0,7,0] = 4.2
+    Pieces[0,3,0] = 5.2
+    Pieces[0,4,0] = 6.2
+    return Pieces
+
+# Boards for Troubleshooting
+def AIPawnPromotionBoard():
+    Pieces = np.zeros((8,8,4))
+    Pieces[:,:,:] = 0
+    Pieces[0,0,0] = 6.2
+    Pieces[7,0,0] = 6.1
+    Pieces[7,1,0] = 4.1
+    Pieces[1,3,0] = 4.1
+    Pieces[6,6,0] = 1.2
+    Pieces[7,7,0] = 3.1
+    Pieces[7,6,0] = 3.1
+    Pieces[7,5,0] = 2.1
     return Pieces

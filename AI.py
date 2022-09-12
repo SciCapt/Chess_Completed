@@ -40,29 +40,45 @@ def AI_Make_Move(Pieces, Player, ChosenMove):
         kingx = ChosenMove[6]
         rooky = ChosenMove[7]
         rookx = ChosenMove[8]
+        # New Piece Locations
         Pieces[kingy, kingx,0] = King
         Pieces[rooky, rookx,0] = Rook
         Pieces[OldY, OldX,0] = 0
         Pieces[NewY, NewX,0] = 0
+        # Set Flags
         Pieces[kingy, kingx, 1] = 1 # Castling flag
         Pieces[NewY, NewX, 1] = 0 # Castling flag
+        # Update dim3 (piece movement tally)
+        Pieces[kingy, kingx, 3] = Pieces[NewY, NewX, 3] + 1
+        Pieces[NewY, NewX, 3] = 0
+        Pieces[rooky, rookx, 3] = Pieces[OldY, OldX, 3] + 1
+        Pieces[OldY, OldX, 3] = 0
         return Pieces, False
+
     elif not IsCastling:
         # Apply move to board
         capture = Pieces[NewY, NewX, 0]
+        # Update Pieces/Flags
         Pieces[NewY, NewX,0] = Pieces[OldY, OldX,0]
         Pieces[OldY, OldX,0] = 0
         Pieces[NewY, NewX, 1] = Pieces[OldY, OldX, 1]
         Pieces[OldY, OldX, 1] = 0
+        # AI Capture Memory
         Pieces[NewY, NewX, 2] = capture
         Pieces[OldY, OldX, 2] = 0
+        # Update dim3 (piece movement tally)
+        Pieces[NewY, NewX, 3] = Pieces[OldY, OldX, 3] + 1
+        Pieces[OldY, OldX, 3] = 0
+        # Check for moving king
         if Pieces[NewY, NewX, 0] == 6.1 or Pieces[NewY, NewX, 0] == 6.2: # King Movement disables castling
             Pieces[NewY, NewX, 1] = 1
             Pieces[OldY, OldX, 1] = 0
 
     # Check for Pawn Promotion
     if NewY == 0 and ((pi == 1.1 and Player == "W") or (pi == 1.2 and Player == "B")):
-        Pieces[NewY, NewX, 2] = Pieces[NewY, NewX, 0]
+        # Pieces[NewY, NewX, 2] = Pieces[NewY, NewX, 0] # Whoops, not needed
+        # Also caused problems with pawn promotion as this same thing is done
+        # effectively a few lines earlier
         Pieces[OldY, OldX, 2] = 0
         if Pieces[NewY, NewX,0] == 1.1 and Player == "W":
             Pieces[NewY, NewX,0] = rn.choice([5.1,5.1,5.1,5.1,4.1,3.1,2.1])
@@ -102,12 +118,18 @@ def Undo_AI_Move(Pieces, Player, ChosenMove):
         kingx = ChosenMove[6]
         rooky = ChosenMove[7]
         rookx = ChosenMove[8]
-
         # Undo Castling
         Pieces[NewY, NewX, 0] = Pieces[kingy, kingx, 0]
         Pieces[kingy, kingx, 0] = 0
         Pieces[OldX, OldY, 0] = Pieces[rooky, rookx, 0]
         Pieces[rooky, rookx, 0] = 0
+        # Undo updating dim3 (piece movement tally)
+        if Pieces[kingy, kingx, 3] > 0:
+            Pieces[NewY, NewX, 3] = Pieces[kingy, kingx, 3] - 1
+        Pieces[kingy, kingx, 3] = 0
+        if Pieces[rooky, rookx, 3] > 0:
+            Pieces[OldY, OldX, 3] = Pieces[rooky, rookx, 3] - 1
+        Pieces[rooky, rookx, 3] = 0
         return Pieces
 
     # Test for pawn promotion
@@ -134,6 +156,10 @@ def Undo_AI_Move(Pieces, Player, ChosenMove):
     Pieces[NewY, NewX, 1] = 0
     Pieces[NewY, NewX, 0] = Pieces[NewY, NewX, 2]
     Pieces[NewY, NewX, 2] = 0
+    # Undo Update dim3 (piece movement tally)
+    if Pieces[NewY, NewX, 3] > 0:
+        Pieces[OldY, OldX, 3] = Pieces[NewY, NewX, 3] - 1
+    Pieces[NewY, NewX, 3] = 0
     return Pieces
 
 def Remove_Move(ChosenMove, AIMoves):
@@ -141,8 +167,57 @@ def Remove_Move(ChosenMove, AIMoves):
         if ChosenMove == AIMoves[move]:
             AIMoves.pop(move)
             return AIMoves
+    # Thought I would need this for some errors I was getting but I haven't
+    # actually had to use it yet. Consider this function depreciated for now
+        # Also, the 'False' return at the end of AI_Make_Move isn't neccessary
+        # if this function isn't either.
 
-## AI Personalities ##
+def SF_Position(Pieces):
+    # Single-Frame based Position Algorithm
+    # Give the net (simple) position value of the current board
+    # Doesn't account for things like discovered checks/attacks
+    BlackPos = 0
+    WhitePos = 0
+
+    # Step 1 - Development
+    ## Give points for having moved Pieces and Pawns
+    ## Only matters if a piece has moved, not if it has moved
+    ## multiple times. Give a fraction of a set maximum points based on
+    ## the fraction of pieces/pawns that have moved
+    MaxPoints = 3
+    BlackPieceCount = 0
+    BlackTally = 0
+    WhitePieceCount = 0
+    WhiteTally = 0
+    for i in range(8):
+        for j in range(8):
+            pi = Pieces[i,j,0]
+            tally = Pieces[i,j,3]
+            # See if piece has moved, and who owns it
+            if tally > 0:
+                if pi-(pi//1) == 0.1:
+                    WhiteTally += 1
+                elif pi-(pi//1) == 0.2:
+                    BlackTally += 1
+            # Total up pieces/pawns of each side
+            if pi-(pi//1) == 0.1:
+                WhitePieceCount += 1
+            elif pi-(pi//1) == 0.2:
+                BlackPieceCount += 1
+    # Calculate points to give based on development
+    WhitePos += MaxPoints*(WhiteTally/WhitePieceCount)
+    BlackPos += MaxPoints*(BlackTally/BlackPieceCount)
+
+def It_Position(Pieces):
+    # Iterated Position ('smart') Algorithm
+    # First uses SF_Position to check the immediate position, then checks for
+    # discovered checks/attacks by making all the current moves avalible for both
+    # players. This can then also be used to check for an M1 position.
+        # The Hard AIs will likely do some depth analysis taking full advantage
+        # of this algorithm to check for any M# positions possible. This allows
+        # for a few personalities to test for this later on
+    print('void')
+## Group I AIs ##
 def AI_Bob_Move(Pieces, Player):
     # Get all possible moves for AI
     AIMoves, Pieces = AI_Possible_Moves(Pieces, Player)
@@ -287,3 +362,5 @@ def AI_Nelson_Move(Pieces, Player):
     # Finish
     Pieces, Pop_DEPRECIATED_I_THINK = AI_Make_Move(Pieces, Player, ChosenMove)
     return Pieces
+
+## Group II AIs ##

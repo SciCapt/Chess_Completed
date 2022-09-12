@@ -31,8 +31,11 @@ GameWindow.resizeTo(930, 830)
 GameWindow.moveTo(0, 0)
 
 # Base Array Variables
-Pieces = Starting_Board(np.zeros((8,8,3))); Player = "W"
-    # dim 0 is pieces; dim 1 is piece flags; dim 2 is for ai captures
+Pieces = Starting_Board(np.zeros((8,8,4))); Player = "W"
+    # dim 0 is pieces
+    # dim 1 is piece flags
+    # dim 2 is for ai captures
+    # dim 3 is how many times a piece has moved
 # if rn.random() > 0.5:
 #     Pieces = Flip_Pieces(Pieces)
 #     Player = "B"
@@ -42,6 +45,8 @@ mistake = False
 restart = False
 turn = 0
 
+# Pieces = AIPawnPromotionBoard()
+
 # Dynamic Section
 for t in range(1000):
     # Check if player is idiot and selected unmoveable piece, or if the player
@@ -49,6 +54,7 @@ for t in range(1000):
     if mistake == False:
         Player = turntable[turn%2]
         turn = turn + 1
+        
     else:
         mistake = False
 
@@ -156,6 +162,11 @@ for t in range(1000):
 
     # Set Board for next player
     Pieces = Flip_Pieces(Pieces)
+
+# Print final frame if player won by pawn promotion
+if Player != MainPlayer:
+    Pieces = Flip_Pieces(Pieces)
+    CMD_Print(Pieces_To_Printable(Pieces))
 
 # Final Out for Detected Checkmate/Stalemate/etc.
 if Only_Kings(Pieces):

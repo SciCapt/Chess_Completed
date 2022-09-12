@@ -45,10 +45,16 @@ def Make_Move(AllowedMoves, NewCoords, PieceCoords, Pieces):
             if NewX == ChkX and NewY == ChkY:
 
                 if not IsCastling:
+                    # Move Piece
                     Pieces[NewY, NewX, 0] = Pieces[PieceCoords[0], PieceCoords[1], 0]
                     Pieces[PieceCoords[0], PieceCoords[1], 0] = 0
+                    # Move Flags
                     Pieces[NewY, NewX, 1] = Pieces[OldY, OldX, 1]
                     Pieces[OldY, OldX, 1] = 0
+                    # Update dim3 (piece movement tally)
+                    Pieces[NewY, NewX, 3] = Pieces[OldY, OldX, 3] + 1
+                    Pieces[OldY, OldX, 3] = 0
+                    # If moving king, set king flag to 1
                     if Pieces[NewY, NewX, 0] == 6.1 or Pieces[NewY, NewX, 0] == 6.2: # King Movement disables castling
                         Pieces[NewY, NewX, 1] = 1
                         Pieces[OldY, OldX, 1] = 0
@@ -56,13 +62,19 @@ def Make_Move(AllowedMoves, NewCoords, PieceCoords, Pieces):
                 elif IsCastling:
                     if KingMoved: # King Movement disables castling
                         return True
+                    # New king/rook positions
                     Pieces[kingy, kingx, 0] = King
                     Pieces[kingy, kingx, 1] = 1 # Castling flag
                     Pieces[rooky, rookx, 0] = Rook
+                    # Removing pieces/flags from previous locations
                     Pieces[OldY, OldX, 0] = 0
                     Pieces[NewY, NewX, 0] = 0
                     Pieces[NewY, NewX, 1] = 0 # Castling flag
-
+                    # Update dim3 (piece movement tally)
+                    Pieces[kingy, kingx, 3] = Pieces[NewY, NewX, 3] + 1
+                    Pieces[NewY, NewX, 3] = 0
+                    Pieces[rooky, rookx, 3] = Pieces[OldY, OldX, 3] + 1
+                    Pieces[OldY, OldX, 3] = 0
                 CMD_Print(Pieces_To_Printable(Pieces))
                 return False
     return True
