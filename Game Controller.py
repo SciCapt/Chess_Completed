@@ -36,9 +36,9 @@ Pieces = Starting_Board(np.zeros((8,8,4))); Player = "W"
     # dim 1 is piece flags
     # dim 2 is for ai captures
     # dim 3 is how many times a piece has moved
-# if rn.random() > 0.5:
-#     Pieces = Flip_Pieces(Pieces)
-#     Player = "B"
+if rn.random() > 0.5:
+    Pieces = Flip_Pieces(Pieces)
+    Player = "B"
 MainPlayer = Player
 turntable = ["W", "B"]
 mistake = False
@@ -46,6 +46,7 @@ restart = False
 turn = 0
 
 # Pieces = AIPawnPromotionBoard()
+# Pieces = CastlingBoard()
 
 # Dynamic Section
 for t in range(1000):
@@ -54,7 +55,7 @@ for t in range(1000):
     if mistake == False:
         Player = turntable[turn%2]
         turn = turn + 1
-        
+
     else:
         mistake = False
 
@@ -69,6 +70,8 @@ for t in range(1000):
     # Use AI for Player 2
     if UseAI and Player != MainPlayer:
         # Make move via ai
+        # if Difficulty == 0:
+        #     Pieces = AI_Tester_Move(Pieces, Player)
         if Difficulty == 1:
             Pieces = AI_Bob_Move(Pieces, Player)
         elif Difficulty == 2:

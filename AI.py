@@ -48,6 +48,8 @@ def AI_Make_Move(Pieces, Player, ChosenMove):
         # Set Flags
         Pieces[kingy, kingx, 1] = 1 # Castling flag
         Pieces[NewY, NewX, 1] = 0 # Castling flag
+        Pieces[rooky, rookx, 1] = 1 # Castling flag
+        Pieces[OldY, OldX, 1] = 0 # Castling flag
         # Update dim3 (piece movement tally)
         Pieces[kingy, kingx, 3] = Pieces[NewY, NewX, 3] + 1
         Pieces[NewY, NewX, 3] = 0
@@ -73,6 +75,11 @@ def AI_Make_Move(Pieces, Player, ChosenMove):
         if Pieces[NewY, NewX, 0] == 6.1 or Pieces[NewY, NewX, 0] == 6.2: # King Movement disables castling
             Pieces[NewY, NewX, 1] = 1
             Pieces[OldY, OldX, 1] = 0
+        # Check for moving rook
+        if Pieces[NewY, NewX, 0] == 4.1 or Pieces[NewY, NewX, 0] == 4.2: # King Movement disables castling
+            Pieces[NewY, NewX, 1] = 1
+            Pieces[OldY, OldX, 1] = 0
+
 
     # Check for Pawn Promotion
     if NewY == 0 and ((pi == 1.1 and Player == "W") or (pi == 1.2 and Player == "B")):
@@ -217,6 +224,41 @@ def It_Position(Pieces):
         # of this algorithm to check for any M# positions possible. This allows
         # for a few personalities to test for this later on
     print('void')
+
+## Troubleshooting AI ##
+def AI_Tester_Move(Pieces, Player):
+    # Get all possible moves for AI
+    AIMoves, OriginalBoard = AI_Possible_Moves(Pieces, Player)
+
+    ## Jeff Stuff ##
+    if Player == "W":
+        PlayerTest = "B"
+    elif Player == "B":
+        PlayerTest = "W"
+    FavoredMoves = []
+
+    # Favored move
+    for move in range(len(AIMoves)):
+        ChosenMove = AIMoves[move]
+        try:
+            castling = ChosenMove[4]
+        except:
+            castling = False
+
+        if castling == True:
+            FavoredMoves.append(ChosenMove)
+
+    for move in range(len(FavoredMoves)):
+        for i in range(100): # x100 check move likelyhood
+            AIMoves.append(FavoredMoves[move])
+
+    # Select Move from Optimized List
+    ChosenMove = rn.choice(AIMoves)
+
+    # Finish
+    Pieces = AI_Make_Move(Pieces, Player, ChosenMove)[0]
+    return Pieces
+
 ## Group I AIs ##
 def AI_Bob_Move(Pieces, Player):
     # Get all possible moves for AI

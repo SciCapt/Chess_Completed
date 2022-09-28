@@ -62,16 +62,34 @@ def In_Check(Pieces, Player):
 def Check_Move_Narrower(AllowedMoves, Pieces, Player):
     # Main
     for n in range(len(AllowedMoves)-1,-1,-1):
+        # Move info
         move = AllowedMoves[n]
-        NewX = move[1]; NewY = move[0]
-        OldX = move[3]; OldY = move[2]
-        prev = Pieces[NewY, NewX,0]
-        Pieces[NewY, NewX,0] = Pieces[OldY, OldX,0]
-        Pieces[OldY, OldX,0] = 0
-        if In_Check(Pieces, Player):
-            AllowedMoves.pop(n)
-        Pieces[OldY, OldX,0] = Pieces[NewY, NewX,0]
-        Pieces[NewY, NewX,0] = prev
+        try:
+            if move[4] == True:
+                Castling = True
+        except:
+            Castling = False
+
+        # Castling moves
+        # if Castling == True:
+        #     NewX = move[1]; NewY = move[0]
+        #     OldX = move[3]; OldY = move[2]
+        #     kingy = move[5]; kingx = move[6]
+        #     rooky = move[7]; rookx = move[8]
+        #
+
+        # Typical moves
+        if Castling == False:
+            NewX = move[1]; NewY = move[0]
+            OldX = move[3]; OldY = move[2]
+            prev = Pieces[NewY, NewX,0]
+            Pieces[NewY, NewX,0] = Pieces[OldY, OldX,0]
+            Pieces[OldY, OldX,0] = 0
+            if In_Check(Pieces, Player):
+                AllowedMoves.pop(n)
+            Pieces[OldY, OldX,0] = Pieces[NewY, NewX,0]
+            Pieces[NewY, NewX,0] = prev
+
     return AllowedMoves, Pieces
 
 def Is_Pinned(PieceCoords, Pieces, Player): # find if you cant move a piece

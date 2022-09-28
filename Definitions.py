@@ -222,3 +222,13 @@ def AIPawnPromotionBoard():
     Pieces[7,6,0] = 3.1
     Pieces[7,5,0] = 2.1
     return Pieces
+
+def CastlingBoard():
+    Pieces = Starting_Board(np.zeros((8,8,4)))
+    Pieces[0,1:4,0] = 0
+    Pieces[0,5:7,0] = 0
+    Pieces[7,1:4,0] = 0
+    Pieces[7,5:7,0] = 0
+    Pieces[1, : ,0] = 0
+    Pieces[6, :, 0] = 0
+    return Pieces

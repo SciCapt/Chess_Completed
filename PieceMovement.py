@@ -58,6 +58,10 @@ def Make_Move(AllowedMoves, NewCoords, PieceCoords, Pieces):
                     if Pieces[NewY, NewX, 0] == 6.1 or Pieces[NewY, NewX, 0] == 6.2: # King Movement disables castling
                         Pieces[NewY, NewX, 1] = 1
                         Pieces[OldY, OldX, 1] = 0
+                    # if moving a rook, set anti-castling flag for that rook
+                    if Pieces[NewY, NewX, 0] == 4.1 or Pieces[NewY, NewX, 0] == 4.2:
+                        Pieces[NewY, NewX, 1] = 1
+                        Pieces[OldY, OldX, 1] = 0
 
                 elif IsCastling:
                     if KingMoved: # King Movement disables castling
@@ -66,10 +70,12 @@ def Make_Move(AllowedMoves, NewCoords, PieceCoords, Pieces):
                     Pieces[kingy, kingx, 0] = King
                     Pieces[kingy, kingx, 1] = 1 # Castling flag
                     Pieces[rooky, rookx, 0] = Rook
+                    Pieces[rooky, rookx, 1] = 1 # Castling flag
                     # Removing pieces/flags from previous locations
                     Pieces[OldY, OldX, 0] = 0
                     Pieces[NewY, NewX, 0] = 0
                     Pieces[NewY, NewX, 1] = 0 # Castling flag
+                    Pieces[OldY, OldX, 1] = 0 # Castling flag
                     # Update dim3 (piece movement tally)
                     Pieces[kingy, kingx, 3] = Pieces[NewY, NewX, 3] + 1
                     Pieces[NewY, NewX, 3] = 0
@@ -78,6 +84,70 @@ def Make_Move(AllowedMoves, NewCoords, PieceCoords, Pieces):
                 CMD_Print(Pieces_To_Printable(Pieces))
                 return False
     return True
+
+def Undo_Move(Pieces, Player, ChosenMove):
+    # Cords (Flipped logic for undoing the move)
+    OldX = ChosenMove[3]; OldY = ChosenMove[2]
+    NewX = ChosenMove[1]; NewY = ChosenMove[0]
+
+    # Check if last move was Castling
+    try:
+        IsCastling = ChosenMove[4]
+    except:
+        IsCastling = False
+    if IsCastling:
+        King = Pieces[NewY, NewX, 0]
+        KingMoved = False
+        if Pieces[NewY, NewX, 1] == 1:
+            KingMoved = True
+        Rook = Pieces[OldY, OldX, 0]
+        kingy = ChosenMove[5]
+        kingx = ChosenMove[6]
+        rooky = ChosenMove[7]
+        rookx = ChosenMove[8]
+        # Undo Castling
+        Pieces[NewY, NewX, 0] = Pieces[kingy, kingx, 0]
+        Pieces[kingy, kingx, 0] = 0
+        Pieces[OldX, OldY, 0] = Pieces[rooky, rookx, 0]
+        Pieces[rooky, rookx, 0] = 0
+        # Undo updating dim3 (piece movement tally)
+        if Pieces[kingy, kingx, 3] > 0:
+            Pieces[NewY, NewX, 3] = Pieces[kingy, kingx, 3] - 1
+        Pieces[kingy, kingx, 3] = 0
+        if Pieces[rooky, rookx, 3] > 0:
+            Pieces[OldY, OldX, 3] = Pieces[rooky, rookx, 3] - 1
+        Pieces[rooky, rookx, 3] = 0
+        return Pieces
+
+    # Test for pawn promotion
+    if Pieces[NewY, NewX, 1] == 2:
+        Pieces[NewY, NewX, 1] = 0
+        Pieces[NewY, NewX, 0] = 0
+        if Player == "W":
+            Pieces[OldY, OldX, 0] = 1.1
+            Pieces[OldY, OldX, 1] = 0
+            Pieces[NewY, NewX, 0] = Pieces[NewY, NewX, 2]
+            Pieces[NewY, NewX, 2] = 0
+            return Pieces
+        elif Player == "B":
+            Pieces[OldY, OldX, 0] = 1.2
+            Pieces[OldY, OldX, 1] = 0
+            Pieces[NewY, NewX, 0] = Pieces[NewY, NewX, 2]
+            Pieces[NewY, NewX, 2] = 0
+            return Pieces
+
+    # Default Undo Move
+    Pieces[OldY, OldX, 0] = Pieces[NewY, NewX, 0]
+    Pieces[NewY, NewX, 0] = 0
+    Pieces[OldY, OldX, 1] = Pieces[NewY, NewX, 1]
+    Pieces[NewY, NewX, 1] = 0
+    Pieces[NewY, NewX, 0] = Pieces[NewY, NewX, 2]
+    Pieces[NewY, NewX, 2] = 0
+    # Undo Update dim3 (piece movement tally)
+    if Pieces[NewY, NewX, 3] > 0:
+        Pieces[OldY, OldX, 3] = Pieces[NewY, NewX, 3] - 1
+    Pieces[NewY, NewX, 3] = 0
+    return Pieces
 
 def Flip_Moves(Moves): # translate one player's legal moves to the other player's perspective
     for n in range(len(Moves)):
@@ -312,37 +382,6 @@ def Legal_Moves_FOR_KING(PieceCoords, Pieces, Player):
                     legal.append([By+j,Bx+i, By, Bx])
                     break
 
-        # Castling #
-        Ry = By; Rx = Bx
-        # for black
-        if Rx == 0 and Ry == 7:
-            if Pieces[7, 1,0] == 0 and Pieces[7,2,0] == 0 and Pieces[7,3,0] == 6.2 and Player == "B":
-                legal.append([7, 3, 7, 0, True, 7, 1, 7, 2])
-                # format of [newy, newx, oldy, oldx, IsCastling, kingy, kingx, rooky, rookx]
-        if Rx == 7 and Ry == 7:
-            if Pieces[7, 4,0] == 0 and Pieces[7,5,0] == 0 and Pieces[7,6,0] == 0 and Pieces[7,3,0] == 6.2 and Player == "B":
-                legal.append([7, 3, 7, 7, True, 7, 5, 7, 4])
-        if Rx == 0 and Ry == 0:
-            if Pieces[0, 1,0] == 0 and Pieces[0,2,0] == 0 and Pieces[0,3,0] == 0 and Pieces[0,4,0] == 6.2 and Player == "B":
-                legal.append([0,4, 0, 0, True, 0, 2, 0, 3])
-        if Rx == 7 and Ry == 0:
-            if Pieces[0, 6,0] == 0 and Pieces[0,5,0] == 0 and Pieces[0,4,0] == 6.2 and Player == "B":
-                legal.append([0,4, 0, 7, True, 0, 6, 0, 5])
-        # for white
-        if Rx == 0 and Ry == 7:
-            if Pieces[7, 1,0] == 0 and Pieces[7,2,0] == 0 and Pieces[7,3,0] == 0 and Pieces[7,4,0] == 6.1 and Player == "W":
-                legal.append([7, 4, 7, 0, True, 7, 2, 7, 3])
-        if Rx == 7 and Ry == 7:
-            if Pieces[7, 6,0] == 0 and Pieces[7,5,0] == 0 and Pieces[7,4,0] == 6.1 and Player == "W":
-                legal.append([7, 4, 7, 7, True, 7, 6, 7, 5])
-        if Rx == 0 and Ry == 0:
-            if Pieces[0, 1,0] == 0 and Pieces[0,2,0] == 0 and Pieces[0,3,0] == 6.1 and Player == "W":
-                legal.append([0,3, 0, 0, True, 0, 1, 0, 2])
-        if Rx == 7 and Ry == 0:
-            if Pieces[0, 6,0] == 0 and Pieces[0,5,0] == 0 and Pieces[0,4,0] == 0 and Pieces[0,3,0] == 6.1 and Player == "W":
-                legal.append([0,3, 0, 7, True, 0, 5, 0, 4])
-
-
     # Queen #
     if (piece == 5.1 and Player == 'W') or (piece == 5.2 and Player == 'B'):
         # OK YES I just used the bishop's and "rook's" code =)
@@ -437,6 +476,49 @@ def Legal_Moves_FOR_KING(PieceCoords, Pieces, Player):
                     break
 
     return legal
+
+def IUA_FOR_KING(CordsList, Pieces, Player):
+    # List of True/Falses
+    Booleans = []
+
+    for n in range(len(CordsList)):
+        # Get Piece Coords player is testing if is under attack
+        PieceCoords = CordsList[n]
+        Pix = PieceCoords[1]; Piy = PieceCoords[0]
+
+        # Find all possible moves for the other player
+        if Player == "W":
+            otherPlayer = "B"
+        else:
+            otherPlayer = "W"
+        allLegalMoves = []
+        for j in range(8):
+            for i in range(8):
+                allLegalMoves = allLegalMoves + Legal_Moves_FOR_KING([j,i], Flip_Pieces(Pieces), otherPlayer)
+
+        # Flip Moves
+        allLegalMoves = Flip_Moves(allLegalMoves)
+
+        # Delete Straight Pawn Moves (Can't capture)
+        for n in range(len(allLegalMoves)-1, -1, -1):
+            move = allLegalMoves[n]
+            if Pieces[move[2], move[3], 0]//1 == 1: # is the piece a pawn
+                if move[1] == move[3]: # Same x row
+                    if move[0] == move[2]+1 or move[0] == move[2]+2: # 1 or 2 square pawn move
+                        # If all true, then it is a non-capturing pawn move
+                        # so it shouldn't be factored as an attack
+                        allLegalMoves.pop(n)
+
+
+        # Test if other player has move to capture test piece
+        for n in range(len(allLegalMoves)):
+            move = allLegalMoves[n]
+            moveX = move[1]; moveY = move[0]
+            if moveX == Pix and moveY == Piy:
+                Booleans.append(True)
+        Booleans.append(False)
+
+    return Booleans
 
 def Legal_Moves(PieceCoords, Pieces, Player):
     piece = Pieces[PieceCoords[0], PieceCoords[1], 0]
@@ -590,52 +672,6 @@ def Legal_Moves(PieceCoords, Pieces, Player):
                     legal.append([By+j,Bx+i, By, Bx])
                     break
 
-        # Castling #
-        Ry = By; Rx = Bx
-
-        # Check if king moved or already castled
-        if Player == "W":
-            checkFor = 6.1
-        else:
-            checkFor = 6.2
-        for j in range(8):
-            for i in range(8):
-                if Pieces[j,i,0] == checkFor:
-                    kingX = i
-                    kingY = j
-        if Pieces[kingY,kingX,1] == 1:
-            return legal
-
-        # Castling for black
-        if Rx == 0 and Ry == 7:
-            if Pieces[7, 1,0] == 0 and Pieces[7,2,0] == 0 and Pieces[7,3,0] == 6.2 and Player == "B":
-                # Also check if castling squares (rook to king) are under attack TODO!!!!!!!!!!!!
-                legal.append([7, 3, 7, 0, True, 7, 1, 7, 2])
-                # format of [newy, newx, oldy, oldx, IsCastling, kingy, kingx, rooky, rookx]
-        if Rx == 7 and Ry == 7:
-            if Pieces[7, 4,0] == 0 and Pieces[7,5,0] == 0 and Pieces[7,6,0] == 0 and Pieces[7,3,0] == 6.2 and Player == "B":
-                legal.append([7, 3, 7, 7, True, 7, 5, 7, 4])
-        if Rx == 0 and Ry == 0:
-            if Pieces[0, 1,0] == 0 and Pieces[0,2,0] == 0 and Pieces[0,3,0] == 0 and Pieces[0,4,0] == 6.2 and Player == "B":
-                legal.append([0,4, 0, 0, True, 0, 2, 0, 3])
-        if Rx == 7 and Ry == 0:
-            if Pieces[0, 6,0] == 0 and Pieces[0,5,0] == 0 and Pieces[0,4,0] == 6.2 and Player == "B":
-                legal.append([0,4, 0, 7, True, 0, 6, 0, 5])
-        # Casling for white
-        if Rx == 0 and Ry == 7:
-            if Pieces[7, 1,0] == 0 and Pieces[7,2,0] == 0 and Pieces[7,3,0] == 0 and Pieces[7,4,0] == 6.1 and Player == "W":
-                legal.append([7, 4, 7, 0, True, 7, 2, 7, 3])
-        if Rx == 7 and Ry == 7:
-            if Pieces[7, 6,0] == 0 and Pieces[7,5,0] == 0 and Pieces[7,4,0] == 6.1 and Player == "W":
-                legal.append([7, 4, 7, 7, True, 7, 6, 7, 5])
-        if Rx == 0 and Ry == 0:
-            if Pieces[0, 1,0] == 0 and Pieces[0,2,0] == 0 and Pieces[0,3,0] == 6.1 and Player == "W":
-                legal.append([0,3, 0, 0, True, 0, 1, 0, 2])
-        if Rx == 7 and Ry == 0:
-            if Pieces[0, 6,0] == 0 and Pieces[0,5,0] == 0 and Pieces[0,4,0] == 0 and Pieces[0,3,0] == 6.1 and Player == "W":
-                legal.append([0,3, 0, 7, True, 0, 5, 0, 4])
-
-
     # Queen #
     if (piece == 5.1 and Player == 'W') or (piece == 5.2 and Player == 'B'):
         # OK YES I just used the bishop's and "rook's" code =)
@@ -779,6 +815,69 @@ def Legal_Moves(PieceCoords, Pieces, Player):
                     if kmvX == i and kmvY == j:
                         if Player=="B" and Piece_Is_Black([j,i],Pieces) or Player=="W" and Piece_Is_White([j,i],Pieces):
                             legal.pop(n)
+
+        # Castling #
+        Ry = Ky; Rx = Kx
+
+        # Check if king moved or already castled
+        if Player == "W":
+            checkFor = 6.1
+            rookNum = 4.1
+        else:
+            checkFor = 6.2
+            rookNum = 4.2
+        for j in range(8):
+            for i in range(8):
+                rookX = []; rookY = []
+                if Pieces[j,i,0] == checkFor:
+                    kingX = i
+                    kingY = j
+                if Pieces[j,i,0] == rookNum:
+                    rookX.append(i)
+                    rookY.append(j)
+        if Pieces[kingY,kingX,1] == 1:
+            return legal
+
+        # Castling for black
+        if True not in IUA_FOR_KING([[7,3]], Pieces, "B"): # If king not in check
+            if Pieces[7,3,0] == 6.2 and True not in IUA_FOR_KING([[7,1], [7,2]], Pieces, "B"): # if king in right pos and the in-between squares aren't under attack
+                if Pieces[7, 1,0] == 0 and Pieces[7,2,0] == 0 and Pieces[7,0,0] == 4.2 and Player == "B": # if the rook and opsn squares are in the right pos
+                    if Pieces[7,0,1] != 1: # if the rook doesn't have an anti-casling flag
+                        legal.append([7, 0, 7, 3, True, 7, 1, 7, 2])
+                        # format of [newy, newx, oldy, oldx, IsCastling, kingy, kingx, rooky, rookx]
+            if Pieces[7,3,0] == 6.2 and True not in IUA_FOR_KING([[7,4], [7,5], [7,6]], Pieces, "B"):
+                if Pieces[7, 4,0] == 0 and Pieces[7,5,0] == 0 and Pieces[7,6,0] == 0 and Pieces[7,7,0] == 4.2 and Player == "B":
+                    if Pieces[7,7,1] != 1:
+                        legal.append([7, 7, 7, 3, True, 7, 5, 7, 4])
+        if True not in IUA_FOR_KING([[0,4]], Pieces, "B"):
+            if Pieces[0,4,0] == 6.2 and True not in IUA_FOR_KING([[0,1], [0,2], [0,3]], Pieces, "B"):
+                if Pieces[0, 1,0] == 0 and Pieces[0,2,0] == 0 and Pieces[0,3,0] == 0 and Pieces[0,0,0] == 4.2 and Player == "B":
+                    if Pieces[0,0,1] != 1:
+                        legal.append([0, 0, 0, 4, True, 0, 2, 0, 3])
+            if Pieces[0,4,0] == 6.2 and True not in IUA_FOR_KING([[0,6], [0,5]], Pieces, "B"):
+                if Pieces[0, 6,0] == 0 and Pieces[0,5,0] == 0 and Pieces[0,7,0] == 4.2 and Player == "B":
+                    if Pieces[0,7,1] != 1:
+                        legal.append([0, 7, 0, 4, True, 0, 6, 0, 5])
+
+        # Casling for white
+        if True not in IUA_FOR_KING([[7,4]], Pieces, "W"):
+            if Pieces[7,4,0] == 6.1 and True not in IUA_FOR_KING([[7,1], [7,2], [7,3]], Pieces, "W"):
+                if Pieces[7, 1,0] == 0 and Pieces[7,2,0] == 0 and Pieces[7,3,0] == 0 and Pieces[7,0,0] == 4.1 and Player == "W":
+                    if Pieces[7,0,1] != 1:
+                        legal.append([7, 0, 7, 4, True, 7, 2, 7, 3])
+            if Pieces[7,4,0] == 6.1 and True not in IUA_FOR_KING([[7,6], [7,5]], Pieces, "W"):
+                if Pieces[7, 6,0] == 0 and Pieces[7,5,0] == 0 and Pieces[7,7,0] == 4.1 and Player == "W":
+                    if Pieces[7,7,1] != 1:
+                        legal.append([7, 7, 7, 4, True, 7, 6, 7, 5])
+        if True not in IUA_FOR_KING([[0,3]], Pieces, "W"):
+            if Pieces[0,3,0] == 6.1 and True not in IUA_FOR_KING([[0,1], [0,2]], Pieces, "W"):
+                if Pieces[0, 1,0] == 0 and Pieces[0,2,0] == 0 and Pieces[0,0,0] == 4.1 and Player == "W":
+                    if Pieces[0,0,1] != 1:
+                        legal.append([0, 0, 0, 3, True, 0, 1, 0, 2])
+            if Pieces[0,3,0] == 6.1 and True not in IUA_FOR_KING([[0,6], [0,5], [0,4]], Pieces, "W"):
+                if Pieces[0, 6,0] == 0 and Pieces[0,5,0] == 0 and Pieces[0,4,0] == 0 and Pieces[0,7,0] == 4.1 and Player == "W":
+                    if Pieces[0,7,1] != 1:
+                        legal.append([0, 7, 0, 3, True, 0, 5, 0, 4])
 
     # Finish
     return legal
