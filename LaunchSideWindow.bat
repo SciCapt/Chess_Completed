@@ -1,0 +1,2 @@
+py "SideWindow.py"
+pause
