@@ -30,6 +30,9 @@ GameWindow = wn.getWindowsWithTitle('Chess')[0]
 GameWindow.resizeTo(930, 830)
 GameWindow.moveTo(0, 0)
 
+# Side Window Launch
+system("start LaunchSideWindow.bat")
+
 # Base Array Variables
 Pieces = Starting_Board(np.zeros((8,8,4))); Player = "W"
     # dim 0 is pieces
@@ -45,6 +48,9 @@ mistake = False
 restart = False
 turn = 0
 
+# Save MainPlayer to file so evaluation bar car be oriented correctly
+np.save("Player", MainPlayer)
+
 # Pieces = AIPawnPromotionBoard()
 # Pieces = CastlingBoard()
 
@@ -55,13 +61,17 @@ for t in range(1000):
     if mistake == False:
         Player = turntable[turn%2]
         turn = turn + 1
-
     else:
         mistake = False
 
     # Checkmate Detection
     if Player == MainPlayer:
         CMD_Print(Pieces_To_Printable(Pieces))
+
+        # Save the board position to a file for the side window to calculate position from
+        if Player == MainPlayer:
+            np.save("Board", Pieces)
+
     if Is_Checkmate(Pieces, Player):
         break
     if Only_Kings(Pieces):
@@ -183,3 +193,8 @@ else:
     elif Player == "B":
         Player = "W"
     print(f'Player {Player} Wins!')
+
+# Close Side Window
+time.sleep(0.33)
+sideWindow = wn.getWindowsWithTitle('Position')[0]
+sideWindow.close()

@@ -185,6 +185,32 @@ def Piece(n):
     elif n == 0:
         return Base
 
+# Piece Material Value Table
+def Material_Value(pi):
+    if pi//1 == 1:
+        return 1
+    elif pi//1 in [2,3]:
+        return 3
+    elif pi//1 == 4:
+        return 5
+    elif pi//1 == 5:
+        return 9
+    else:
+        return 0
+
+# Piece Capture Value Table
+def Capture_Value(Pi):
+    if pi//1 == 1:
+        return 1
+    elif pi//1 in [2,3]:
+        return 3
+    elif pi//1 == 4:
+        return 5
+    elif pi//1 == 5:
+        return 9
+    elif pi//1 == 6:
+        return 137
+
 # Starting Layout
 def Starting_Board(Pieces):
     # Layout of White Pieces

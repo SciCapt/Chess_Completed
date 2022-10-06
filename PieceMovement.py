@@ -31,11 +31,11 @@ def Make_Move(AllowedMoves, NewCoords, PieceCoords, Pieces):
         except:
             IsCastling = False
         if IsCastling:
-            King = Pieces[NewY, NewX, 0]
+            King = Pieces[OldY, OldX, 0]
             KingMoved = False
             if Pieces[NewY, NewX, 1] == 1:
                 KingMoved = True
-            Rook = Pieces[OldY, OldX, 0]
+            Rook = Pieces[NewY, NewX, 0]
             kingy = AllowedMoves[n][5]
             kingx = AllowedMoves[n][6]
             rooky = AllowedMoves[n][7]

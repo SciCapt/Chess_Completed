@@ -2,6 +2,7 @@ import numpy as np
 import random as rn
 from PieceMovement import *
 from CheckmateNerd import *
+from Definitions import *
 
 ## AI Base Functions ##
 def AI_Possible_Moves(Pieces, Player):
@@ -180,40 +181,63 @@ def Remove_Move(ChosenMove, AIMoves):
         # if this function isn't either.
 
 def SF_Position(Pieces):
-    # Single-Frame based Position Algorithm
+    # Single-Frame Position Algorithm
     # Give the net (simple) position value of the current board
     # Doesn't account for things like discovered checks/attacks
-    BlackPos = 0
-    WhitePos = 0
+    BlackPos = 0; WhitePos = 0
 
     # Step 1 - Development
     ## Give points for having moved Pieces and Pawns
     ## Only matters if a piece has moved, not if it has moved
     ## multiple times. Give a fraction of a set maximum points based on
     ## the fraction of pieces/pawns that have moved
-    MaxPoints = 3
-    BlackPieceCount = 0
-    BlackTally = 0
-    WhitePieceCount = 0
-    WhiteTally = 0
+    Step1Points = 24
+    BlackPieceCount = 0; BlackTally = 0
+    WhitePieceCount = 0; WhiteTally = 0
     for i in range(8):
         for j in range(8):
-            pi = Pieces[i,j,0]
-            tally = Pieces[i,j,3]
+            pi = Pieces[j,i,0]
+            tally = Pieces[j,i,3]
             # See if piece has moved, and who owns it
             if tally > 0:
-                if pi-(pi//1) == 0.1:
+                if round(pi-(pi//1), 1) == 0.1:
                     WhiteTally += 1
-                elif pi-(pi//1) == 0.2:
+                elif round(pi-(pi//1), 1) == 0.2:
                     BlackTally += 1
             # Total up pieces/pawns of each side
-            if pi-(pi//1) == 0.1:
+            if round(pi-(pi//1), 1) == 0.1:
                 WhitePieceCount += 1
-            elif pi-(pi//1) == 0.2:
+            elif round(pi-(pi//1), 1) == 0.2:
                 BlackPieceCount += 1
-    # Calculate points to give based on development
-    WhitePos += MaxPoints*(WhiteTally/WhitePieceCount)
-    BlackPos += MaxPoints*(BlackTally/BlackPieceCount)
+    # Calculate points to give from development
+    WhitePos += Step1Points*(WhiteTally/WhitePieceCount)
+    BlackPos += Step1Points*(BlackTally/BlackPieceCount)
+
+
+    # Step 2 - Material
+    ## Give points based on captures and such
+    ## Just counts material change from starting piece count
+    ##? Should promoted pawns be counts as such?
+    whiteMaterial = 0; blackMaterial = 0
+    for i in range(8):
+        for j in range(8):
+            pi = Pieces[j,i,0]
+            if Piece_Is_Black([j,i], Pieces):
+                blackMaterial += Material_Value(pi)
+            elif Piece_Is_White([j,i], Pieces):
+                whiteMaterial += Material_Value(pi)
+    # To avoid dividing by zero when only a player's king is left
+    if blackMaterial == 0:
+        blackMaterial = 1
+    if whiteMaterial == 0:
+        whiteMaterial = 1
+    WhitePos += whiteMaterial
+    BlackPos += blackMaterial
+
+
+    # Last Step
+    return [WhitePos-BlackPos, WhitePos, BlackPos]
+
 
 def It_Position(Pieces):
     # Iterated Position ('smart') Algorithm
