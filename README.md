@@ -4,7 +4,7 @@
 
 - It is worth noting that when running the game via the "Start Game" bat file (it just simply launchs 'Game Controller.py', you will first be prompted if you want AI to play against. If you don't want to play with AIs, simply press enter or type no.
 
-# CONTROLS AND STUFF:
+# Controls and Such:
 
 - Don't move the CMD when it starts up and resizes! To enable the following controls, It must be at a particular part of the screen, with its particular size.
 
