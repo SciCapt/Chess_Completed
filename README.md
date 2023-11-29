@@ -1,6 +1,10 @@
+# Chess!
+
+![](pictures/ghpic1.png)
+
 # Introductory Banter:
 
-- I think this only works for Windows OS. I wouldn't know as I don't know the Command Prompt commands in any other OS. This would frankly be an easy fix, I just don't have any machines to test it on.
+- This uses a custom set of display functions that uses the Windows CMD to display the game. On smaller screens, the top board row might not fully show.
 
 - It is worth noting that when running the game via the "Start Game" bat file (it just simply launchs 'Game Controller.py', you will first be prompted if you want AI to play against. If you don't want to play with AIs, simply press enter or type no.
 
